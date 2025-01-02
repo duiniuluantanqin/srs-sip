@@ -40,9 +40,7 @@ const deviceNodes = computed(() => {
 
 const refreshDevices = async () => {
   try {
-    if (devices.value.length === 0) {
-      await fetchDevicesAndChannels()
-    }
+    await fetchDevicesAndChannels()
   } catch (error) {
     ElMessage.error('刷新设备列表失败')
   }
