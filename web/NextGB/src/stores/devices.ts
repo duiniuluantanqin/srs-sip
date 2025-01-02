@@ -37,7 +37,7 @@ export const fetchDevicesAndChannels = async () => {
           // 确保每个通道都有正确的设备ID和其他必要属性
           const deviceChannels = response.data.map((channel: any) => ({
             ...channel,
-            device_id: device.device_id,
+            device_id: channel.device_id,
             status: channel.status || 'OFF',
             name: channel.name || channel.device_id,
             parent_id: device.device_id,

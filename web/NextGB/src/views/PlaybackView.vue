@@ -5,6 +5,8 @@ import MonitorGrid from '@/components/monitor/MonitorGrid.vue'
 import DateTimeRangePanel from '@/components/common/DateTimeRangePanel.vue'
 import type { Device, ChannelInfo } from '@/types/api'
 import type { LayoutConfig } from '@/types/layout'
+import { deviceApi } from '@/api'
+import dayjs from 'dayjs'
 import {
   CaretRight,
   VideoPause,
@@ -16,7 +18,6 @@ import {
   Download,
   Microphone
 } from '@element-plus/icons-vue'
-import dayjs from 'dayjs'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 type LayoutKey = '1'
@@ -95,17 +96,28 @@ const handleWindowSelect = (data: { deviceId: string; channelId: string } | null
   activeWindow.value = data
 }
 
-const handleSearch = ({ start, end }: { start: string; end: string }) => {
+const handleQueryRecord = async ({ start, end }: { start: string; end: string }) => {
   console.log('查询时间范围：', {
     start,
     end,
     channel: currentChannel.value
   })
+  // 将时间转为unix时间戳
+  const startTime = dayjs(start).unix()
+  const endTime = dayjs(end).unix()
+  const response = await deviceApi.queryRecord({
+    device_id: currentDevice.value?.device_id || '',
+    channel_id: currentChannel.value?.device_id || '',
+    start_time: startTime,
+    end_time: endTime,
+  })
+  console.log(response)
 }
 
 const clearAllDevices = () => {
   monitorGridRef.value?.clearAllDevices()
 }
+
 </script>
 
 <template>
@@ -117,7 +129,7 @@ const clearAllDevices = () => {
       />
       <DateTimeRangePanel
         title="录像查询"
-        @search="handleSearch"
+        @search="handleQueryRecord"
       />
     </div>
     <div class="right-panel">

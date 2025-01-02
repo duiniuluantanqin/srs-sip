@@ -39,7 +39,7 @@ const formatDeviceData = (device: Device): ExtendedDevice => {
     ...device,
     status: device.status || 0,
     name: device.name || device.device_id,
-    channelCount: allChannels.value.filter(channel => channel.device_id === device.device_id).length,
+    channelCount: allChannels.value.filter(channel => channel.parent_id === device.device_id).length,
   }
 }
 
@@ -72,7 +72,7 @@ const handleRefresh = () => {
 const showDeviceDetails = async (device: ExtendedDevice) => {
   currentDevice.value = device
   dialogVisible.value = true
-  channels.value = allChannels.value.filter(channel => channel.device_id === device.device_id)
+  channels.value = allChannels.value.filter(channel => channel.parent_id === device.device_id)
 }
 
 const getStatusType = (status: number) => {

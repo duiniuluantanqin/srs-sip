@@ -24,6 +24,8 @@ func (h *HttpApiServer) RegisterRoutes(router *mux.Router) {
 	apiV1Router.HandleFunc("/bye", h.ApiBye).Methods(http.MethodPost)
 	apiV1Router.HandleFunc("/ptz", h.ApiPTZControl).Methods(http.MethodPost)
 
+	apiV1Router.HandleFunc("/query-record", h.ApiQueryRecord).Methods(http.MethodPost)
+
 	// 媒体服务器相关接口，查询，新增，删除，用restful风格
 	apiV1Router.HandleFunc("/media-servers", h.ApiListMediaServers).Methods(http.MethodGet)
 	apiV1Router.HandleFunc("/media-servers", h.ApiAddMediaServer).Methods(http.MethodPost)
@@ -163,6 +165,27 @@ func (h *HttpApiServer) ApiPTZControl(w http.ResponseWriter, r *http.Request) {
 	}
 	msg = "success"
 
+}
+
+func (h *HttpApiServer) ApiQueryRecord(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		DeviceID  string `json:"device_id"`
+		ChannelID string `json:"channel_id"`
+		StartTime int64  `json:"start_time"`
+		EndTime   int64  `json:"end_time"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	records, err := h.sipSvr.Uas.QueryRecord(req.DeviceID, req.ChannelID, req.StartTime, req.EndTime)
+	if err != nil {
+		h.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"msg": err.Error()})
+		return
+	}
+	h.RespondWithJSON(w, 0, records)
 }
 
 func (h *HttpApiServer) ApiListMediaServers(w http.ResponseWriter, r *http.Request) {

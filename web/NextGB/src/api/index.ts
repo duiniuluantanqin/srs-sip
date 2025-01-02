@@ -60,6 +60,10 @@ export const deviceApi = {
   // 云台控制
   controlPTZ: (params: { device_id: string; channel_id: string; ptz: string; speed: string }) =>
     api.post<ApiResponse<any>>('/srs-sip/v1/ptz', params),
+
+  // 查询录像
+  queryRecord: (params: { device_id: string; channel_id: string; start_time: number; end_time: number }) =>
+    api.post<ApiResponse<any>>('/srs-sip/v1/query-record', params),
 }
 
 // 请求拦截器

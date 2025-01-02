@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import type { Device, ChannelInfo } from '@/types/api'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, Expand, List, InfoFilled } from '@element-plus/icons-vue'
@@ -22,7 +22,7 @@ const expandedKeys = ref<string[]>([])
 const deviceNodes = computed(() => {
   const nodes: DeviceNode[] = []
   for (const device of devices.value) {
-    const deviceChannels = channels.value.filter(channel => channel.device_id === device.device_id)
+    const deviceChannels = channels.value.filter(channel => channel.parent_id === device.device_id)
     const deviceNode: DeviceNode = {
       device_id: device.device_id,
       label: device.name || device.device_id,
