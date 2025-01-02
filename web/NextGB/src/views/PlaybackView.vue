@@ -96,26 +96,44 @@ const handleWindowSelect = (data: { deviceId: string; channelId: string } | null
   activeWindow.value = data
 }
 
+const recordSegments = ref<Array<{
+  start_time: string
+  end_time: string
+  device_id: string
+  file_path: string
+}>>([])
+
 const handleQueryRecord = async ({ start, end }: { start: string; end: string }) => {
-  console.log('查询时间范围：', {
-    start,
-    end,
-    channel: currentChannel.value
-  })
-  // 将时间转为unix时间戳
-  const startTime = dayjs(start).unix()
-  const endTime = dayjs(end).unix()
-  const response = await deviceApi.queryRecord({
-    device_id: currentDevice.value?.device_id || '',
-    channel_id: currentChannel.value?.device_id || '',
-    start_time: startTime,
-    end_time: endTime,
-  })
-  console.log(response)
+  try {
+    const response = await deviceApi.queryRecord({
+      device_id: currentDevice.value?.device_id || '',
+      channel_id: currentChannel.value?.device_id || '',
+      start_time: dayjs(start).unix(),
+      end_time: dayjs(end).unix(),
+    })
+    if (response.code === 0 && response.data) {
+      recordSegments.value = response.data
+    }
+  } catch (error) {
+    console.error('查询录像失败:', error)
+    ElMessage.error('查询录像失败')
+  }
 }
 
 const clearAllDevices = () => {
   monitorGridRef.value?.clearAllDevices()
+}
+
+const calculatePosition = (time: string) => {
+  const hour = dayjs(time).hour()
+  const minute = dayjs(time).minute()
+  return ((hour * 60 + minute) / (24 * 60)) * 100
+}
+
+const calculateWidth = (start: string, end: string) => {
+  const startMinutes = dayjs(start).hour() * 60 + dayjs(start).minute()
+  const endMinutes = dayjs(end).hour() * 60 + dayjs(end).minute()
+  return ((endMinutes - startMinutes) / (24 * 60)) * 100
 }
 
 </script>
@@ -168,6 +186,18 @@ const clearAllDevices = () => {
             </div>
             <div class="timeline-pointer" :style="{ left: '0%' }">
               <div class="pointer-head"></div>
+            </div>
+            <div class="record-segments">
+              <div
+                v-for="(segment, index) in recordSegments"
+                :key="index"
+                class="record-segment"
+                :style="{
+                  left: `${calculatePosition(segment.start_time)}%`,
+                  width: `${calculateWidth(segment.start_time, segment.end_time)}%`
+                }"
+                :title="`${dayjs(segment.start_time).format('HH:mm:ss')} - ${dayjs(segment.end_time).format('HH:mm:ss')}`"
+              />
             </div>
           </div>
         </div>
@@ -589,5 +619,85 @@ const clearAllDevices = () => {
     rgba(255, 255, 255, 0.1) 80%,
     transparent
   );
+}
+
+.record-segments {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  height: 24px;
+  pointer-events: none;
+  padding: 0 1px;
+}
+
+.record-segment {
+  position: absolute;
+  height: 8px;
+  bottom: 12px;
+  background: linear-gradient(180deg, 
+    var(--el-color-success) 0%,
+    var(--el-color-success-light-3) 100%
+  );
+  border-radius: 3px;
+  opacity: 0.85;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.6)
+    );
+    border-radius: 3px 3px 0 0;
+    opacity: 0.5;
+  }
+
+  &:hover {
+    opacity: 1;
+    height: 12px;
+    bottom: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(180deg,
+      var(--el-color-success-light-3) 0%,
+      var(--el-color-success) 100%
+    );
+
+    &::after {
+      content: attr(title);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    &::before {
+      opacity: 0.8;
+    }
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  & + & {
+    margin-left: 2px;
+  }
 }
 </style>

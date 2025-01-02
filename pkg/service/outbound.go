@@ -246,7 +246,7 @@ func (s *UAS) QueryRecord(deviceID, channelID string, startTime, endTime int64) 
 
 	// 时间原本是unix时间戳，需要转换为YYYY-MM-DDTHH:MM:SS
 	startTimeStr := time.Unix(startTime, 0).Format("2006-01-02T00:00:00")
-	endTimeStr := time.Unix(endTime, 0).Format("2006-01-02T23:59:59")
+	endTimeStr := time.Unix(endTime, 0).Format("2006-01-02T15:04:05")
 
 	body := fmt.Sprintf(queryXML, s.getSN(), channelID, startTimeStr, endTimeStr)
 
