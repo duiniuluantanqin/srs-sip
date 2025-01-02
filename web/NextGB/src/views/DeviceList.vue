@@ -25,7 +25,7 @@ const channels = ref<ChannelInfo[]>([])
 const formatDeviceData = (device: Device): ExtendedDevice => {
   return {
     ...device,
-    status: device.status || 'offline',
+    status: device.status || 0,
     name: device.name || device.device_id,
     channelCount: allChannels.value.filter(channel => channel.device_id === device.device_id).length,
   }
@@ -192,8 +192,8 @@ const paginatedDevices = computed(() => {
                 {{ currentDevice?.network_type }}
               </el-descriptions-item>
               <el-descriptions-item label="状态">
-                <el-tag :type="currentDevice?.status === 'online' ? 'success' : 'danger'">
-                  {{ currentDevice?.status === 'online' ? '在线' : '离线' }}
+                <el-tag :type="currentDevice?.status === 1 ? 'success' : 'danger'">
+                  {{ currentDevice?.status === 1 ? '在线' : '离线' }}
                 </el-tag>
               </el-descriptions-item>
               <el-descriptions-item label="通道数量">

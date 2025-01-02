@@ -14,7 +14,7 @@ const formatDeviceData = (device: any): Device => {
     device_id: device.device_id,
     source_addr: device.source_addr,
     network_type: device.network_type,
-    status: 'online',
+    status: device.status,
     name: device.device_id,
   }
 }

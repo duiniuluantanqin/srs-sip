@@ -3,7 +3,7 @@ export interface Device {
   device_id: string
   source_addr: string
   network_type: string
-  status: 'online' | 'offline'
+  status: number
   name: string
 }
 

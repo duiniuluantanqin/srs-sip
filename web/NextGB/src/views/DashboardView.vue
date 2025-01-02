@@ -58,7 +58,7 @@ const updateData = () => {
 
   // 设备统计
   const devicesList = devices.value
-  onlineDeviceCount.value = devicesList.filter(device => device.status === 'online').length
+  onlineDeviceCount.value = devicesList.filter(device => device.status === 1).length
   totalDeviceCount.value = devicesList.length
 }
 
