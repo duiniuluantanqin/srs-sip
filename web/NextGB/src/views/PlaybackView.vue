@@ -218,13 +218,13 @@ const calculateWidth = (start: string, end: string) => {
                     v-if="(hour - 1) % 6 === 0 || (showMediumLabels && (hour - 1) % 3 === 0) || showAllLabels"
                     class="hour-label"
                   >
-                    {{ (hour - 1).toString().padStart(2, '0') }}:00
+                    {{ (hour - 1).toString().padStart(2, '0') }}
                   </div>
                   <div class="hour-line"></div>
                   <div class="half-hour-mark"></div>
                 </div>
                 <div class="hour-mark major-mark" style="flex: 0 0 auto;">
-                  <div class="hour-label">24:00</div>
+                  <div class="hour-label">24</div>
                   <div class="hour-line"></div>
                 </div>
               </div>
