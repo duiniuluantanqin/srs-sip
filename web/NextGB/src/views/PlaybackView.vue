@@ -43,6 +43,47 @@ const timelineWidth = ref(0)
 const showAllLabels = computed(() => timelineWidth.value >= 720) // 当宽度大于720px时显示所有标签
 const showMediumLabels = computed(() => timelineWidth.value >= 480) // 当宽度大于480px时显示中等标签
 
+// 时间轴光标位置
+const cursorPosition = ref(0)
+const cursorTime = ref('')
+const isTimelineHovered = ref(false)
+
+// 计算时间轴上的时间点
+const calculateTimeFromPosition = (position: number) => {
+  const totalMinutes = 24 * 60
+  const minutes = Math.floor((position / 100) * totalMinutes)
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return dayjs().startOf('day').add(hours, 'hour').add(mins, 'minute')
+}
+
+// 处理时间轴鼠标移动
+const handleTimelineMouseMove = (event: MouseEvent) => {
+  const timeline = event.currentTarget as HTMLElement
+  const rect = timeline.getBoundingClientRect()
+  const position = ((event.clientX - rect.left) / rect.width) * 100
+  cursorPosition.value = Math.max(0, Math.min(100, position))
+  cursorTime.value = calculateTimeFromPosition(cursorPosition.value).format('HH:mm:ss')
+}
+
+// 处理时间轴鼠标点击
+const handleTimelineClick = (event: MouseEvent) => {
+  const timeline = event.currentTarget as HTMLElement
+  const rect = timeline.getBoundingClientRect()
+  const position = ((event.clientX - rect.left) / rect.width) * 100
+  const clickTime = calculateTimeFromPosition(position)
+  console.log('选择的时间点:', clickTime.format('HH:mm:ss'))
+}
+
+// 处理时间轴鼠标进入/离开
+const handleTimelineMouseEnter = () => {
+  isTimelineHovered.value = true
+}
+
+const handleTimelineMouseLeave = () => {
+  isTimelineHovered.value = false
+}
+
 // 屏幕尺寸类型
 const screenType = computed(() => {
   if (timelineWidth.value >= 720) return '大屏'
@@ -106,7 +147,11 @@ const handleQueryRecord = async ({ start, end }: { start: string; end: string })
       start_time: dayjs(start).unix(),
       end_time: dayjs(end).unix(),
     })
-    recordSegments.value = response.data
+    if (Array.isArray(response.data)) {
+      recordSegments.value = response.data
+    } else {
+      recordSegments.value = []
+    }
   } catch (error) {
     console.error('查询录像失败:', error)
     ElMessage.error('查询录像失败')
@@ -154,43 +199,57 @@ const calculateWidth = (start: string, end: string) => {
         />
         <div class="timeline-panel" :style="{ height: `${timelineHeight}px` }">
           <div class="timeline-ruler">
-            <div class="timeline-scale">
-              <div v-for="hour in 24" :key="hour" 
-                class="hour-mark"
-                :class="{
-                  'major-mark': (hour - 1) % 6 === 0,
-                  'medium-mark': (hour - 1) % 3 === 0 && (hour - 1) % 6 !== 0,
-                  'minor-mark': (hour - 1) % 3 !== 0
-                }"
-              >
-                <div 
-                  v-if="(hour - 1) % 6 === 0 || (showMediumLabels && (hour - 1) % 3 === 0) || showAllLabels"
-                  class="hour-label"
+            <div class="timeline-scale"
+              @mousemove="handleTimelineMouseMove"
+              @mouseenter="handleTimelineMouseEnter"
+              @mouseleave="handleTimelineMouseLeave"
+              @click="handleTimelineClick"
+            >
+              <div class="timeline-marks">
+                <div v-for="hour in 24" :key="hour" 
+                  class="hour-mark"
+                  :class="{
+                    'major-mark': (hour - 1) % 6 === 0,
+                    'medium-mark': (hour - 1) % 3 === 0 && (hour - 1) % 6 !== 0,
+                    'minor-mark': (hour - 1) % 3 !== 0
+                  }"
                 >
-                  {{ (hour - 1).toString().padStart(2, '0') }}:00
+                  <div 
+                    v-if="(hour - 1) % 6 === 0 || (showMediumLabels && (hour - 1) % 3 === 0) || showAllLabels"
+                    class="hour-label"
+                  >
+                    {{ (hour - 1).toString().padStart(2, '0') }}:00
+                  </div>
+                  <div class="hour-line"></div>
+                  <div class="half-hour-mark"></div>
                 </div>
-                <div class="hour-line"></div>
-                <div class="half-hour-mark"></div>
+                <div class="hour-mark major-mark" style="flex: 0 0 auto;">
+                  <div class="hour-label">24:00</div>
+                  <div class="hour-line"></div>
+                </div>
               </div>
-              <div class="hour-mark major-mark" style="flex: 0 0 auto;">
-                <div class="hour-label">24:00</div>
-                <div class="hour-line"></div>
+              
+              <div class="timeline-cursor" 
+                :class="{ visible: isTimelineHovered }"
+                :style="{ left: `${cursorPosition}%` }"
+              >
+                <div class="cursor-time" :class="{ visible: isTimelineHovered }">
+                  {{ cursorTime }}
+                </div>
               </div>
-            </div>
-            <div class="timeline-pointer" :style="{ left: '0%' }">
-              <div class="pointer-head"></div>
-            </div>
-            <div class="record-segments">
-              <div
-                v-for="(segment, index) in recordSegments"
-                :key="index"
-                class="record-segment"
-                :style="{
-                  left: `${calculatePosition(segment.start_time)}%`,
-                  width: `${calculateWidth(segment.start_time, segment.end_time)}%`
-                }"
-                :title="`${dayjs(segment.start_time).format('HH:mm:ss')} - ${dayjs(segment.end_time).format('HH:mm:ss')}`"
-              />
+
+              <div class="record-segments">
+                <div
+                  v-for="(segment, index) in recordSegments"
+                  :key="index"
+                  class="record-segment"
+                  :style="{
+                    left: `${calculatePosition(segment.start_time)}%`,
+                    width: `${calculateWidth(segment.start_time, segment.end_time)}%`
+                  }"
+                  :title="`${dayjs(segment.start_time).format('HH:mm:ss')} - ${dayjs(segment.end_time).format('HH:mm:ss')}`"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -460,11 +519,23 @@ const calculateWidth = (start: string, end: string) => {
   align-items: flex-end;
 }
 
-.timeline-scale {
+.timeline-marks {
   height: 100%;
   display: flex;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.timeline-scale {
+  height: 100%;
   position: relative;
   width: 100%;
+  cursor: pointer;
 }
 
 .hour-mark {
@@ -505,13 +576,21 @@ const calculateWidth = (start: string, end: string) => {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.timeline-pointer {
+.timeline-cursor {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background-color: var(--el-color-primary);
+  width: 1px;
+  background-color: var(--el-color-warning);
   transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+  
+  &.visible {
+    opacity: 1;
+  }
   
   &::after {
     content: '';
@@ -524,33 +603,30 @@ const calculateWidth = (start: string, end: string) => {
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(var(--el-color-primary-rgb), 0.2),
+      rgba(var(--el-color-warning-rgb), 0.2),
       transparent
     );
   }
 }
 
-.pointer-head {
+.cursor-time {
   position: absolute;
-  top: -1px;
+  top: -20px;
   left: 50%;
   transform: translateX(-50%);
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: var(--el-color-primary);
-  box-shadow: 0 0 6px rgba(var(--el-color-primary-rgb), 0.6);
+  background-color: var(--el-color-warning);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
   
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background-color: #fff;
+  &.visible {
+    opacity: 1;
   }
 }
 
@@ -616,12 +692,11 @@ const calculateWidth = (start: string, end: string) => {
 
 .record-segments {
   position: absolute;
-  left: 24px;
-  right: 24px;
+  left: 0;
+  right: 0;
   bottom: 0;
   height: 24px;
   pointer-events: none;
-  padding: 0 1px;
 }
 
 .record-segment {
