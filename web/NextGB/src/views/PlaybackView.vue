@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import DeviceTree from '@/components/monitor/DeviceTree.vue'
 import MonitorGrid from '@/components/monitor/MonitorGrid.vue'
 import DateTimeRangePanel from '@/components/common/DateTimeRangePanel.vue'
-import type { Device, ChannelInfo } from '@/types/api'
+import type { Device, ChannelInfo, RecordInfo } from '@/types/api'
 import type { LayoutConfig } from '@/types/layout'
 import { deviceApi } from '@/api'
 import dayjs from 'dayjs'
@@ -96,12 +96,7 @@ const handleWindowSelect = (data: { deviceId: string; channelId: string } | null
   activeWindow.value = data
 }
 
-const recordSegments = ref<Array<{
-  start_time: string
-  end_time: string
-  device_id: string
-  file_path: string
-}>>([])
+const recordSegments = ref<RecordInfo[]>([])
 
 const handleQueryRecord = async ({ start, end }: { start: string; end: string }) => {
   try {
@@ -111,9 +106,7 @@ const handleQueryRecord = async ({ start, end }: { start: string; end: string })
       start_time: dayjs(start).unix(),
       end_time: dayjs(end).unix(),
     })
-    if (response.code === 0 && response.data) {
-      recordSegments.value = response.data
-    }
+    recordSegments.value = response.data
   } catch (error) {
     console.error('查询录像失败:', error)
     ElMessage.error('查询录像失败')
