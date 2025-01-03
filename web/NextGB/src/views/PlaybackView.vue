@@ -703,66 +703,10 @@ const calculateWidth = (start: string, end: string) => {
   position: absolute;
   height: 8px;
   bottom: 12px;
-  background: linear-gradient(180deg, 
-    var(--el-color-success) 0%,
-    var(--el-color-success-light-3) 100%
-  );
-  border-radius: 3px;
+  background-color: var(--el-color-success);
   opacity: 0.85;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: auto;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 2px;
-    background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.3),
-      rgba(255, 255, 255, 0.6)
-    );
-    border-radius: 3px 3px 0 0;
-    opacity: 0.5;
-  }
-
-  &:hover {
-    opacity: 1;
-    height: 12px;
-    bottom: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    background: linear-gradient(180deg,
-      var(--el-color-success-light-3) 0%,
-      var(--el-color-success) 100%
-    );
-
-    &::after {
-      content: attr(title);
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.85);
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    &::before {
-      opacity: 0.8;
-    }
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
 
   & + & {
     margin-left: 2px;
